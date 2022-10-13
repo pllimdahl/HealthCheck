@@ -1,0 +1,10 @@
+check internet via api and print ip
+
+check services and versions
+
+check if screen is connected
+
+check sound.... maybe
+
+check ports
+
