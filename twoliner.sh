@@ -30,7 +30,7 @@ echo -e "\n"
 # Ask the user if they want to see the boot info
 read -p $'\033[0;33mDo you want to see the last boot time and possible reboot reasons? (y/n) \033[0m' answer
 
-if [[ "$answer" =~ ^[Yy]$ ]]; then
+if [[ -n "$answer" && "$answer" =~ ^[Yy]$ ]]; then
     # Display the last boot time
     echo -e "\033[0;36m\nLAST BOOT TIME:\n\033[0m"
     echo -e "\033[0;32m$(who -b)\n\033[0m"
@@ -40,4 +40,5 @@ if [[ "$answer" =~ ^[Yy]$ ]]; then
     sudo journalctl --boot=-1 -e | grep -Ei 'shutting down|reboot|starting' | tail
     echo -e "\n"
 else
-    echo "\033[0;31mBoot info display skipped.\033[0m"
+    echo -e "\033[0;31mBoot info display skipped.\033[0m"
+fi
