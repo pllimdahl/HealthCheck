@@ -7,13 +7,15 @@ echo -e "\033[0;36mSCREEN RES AND OUTPUT:\n\033[0m"
 output=$(sudo runuser -l player -c 'export DISPLAY=:0 && xrandr | grep HDMI-0')
 
 if [[ $output == *"disconnected"* ]]; then
-    echo -e "\033[0;31mNo display connected.\033[0m"
+    echo -e "\033[0;31mNo HDMI connected. Check for DP or DVI with xrandr\033[0m"
 else
     echo "$output"
 fi
 
 echo -e "\033[0;36m\nCHECKING NETWORK:\n\033[0m"
-echo -e "\033[0;33mIP and MAC: $(hostname --ip-address)\n\033[0m"
+INTERFACE=$(ip route | grep default | awk '{print $5}')
+echo -e "\033[0;33mIP: $(hostname -I | awk '{print $1}')\n\033[0m"
+echo -e "\033[0;33mMAC: $(ip link show $INTERFACE | awk '/link/ {print $2}')\n\033[0m"
 curl -s --head --request GET http://api.cinemataztic.com --max-time 10 > /dev/null 2>&1 && echo -e "\033[0;32m\n---------- API is reachable ----------\n\033[0m" || echo -e "\033[0;31m\n---------- API not reachable ----------\n\033[0m"
 echo -e "\033[0;36mCHECKING VERSIONS:\n\033[0m"
 
