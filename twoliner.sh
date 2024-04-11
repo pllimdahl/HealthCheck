@@ -1,4 +1,4 @@
-echo -e "\n"
+sudo echo -e "\n"
 echo -e "\033[0;34m\nSTARTING HEALTH CHECK\n\033[0m"
 echo -e "\033[0;36m\nCHECKING NVIDIA DRIVER:\n\033[0m"
 if nvidia-smi &>/dev/null; then echo -e "\033[0;32mNVIDIA driver is installed and active.\n\033[0m"; else echo -e "\033[0;31mNVIDIA driver is not installed.\n\033[0m"; fi
@@ -40,4 +40,4 @@ if [[ "$answer" =~ ^[Yy]$ ]]; then
     sudo journalctl --boot=-1 -e | grep -Ei 'shutting down|reboot|starting' | tail
     echo -e "\n"
 else
-    echo "\033[0;31mBoot info display skipped.\
+    echo "\033[0;31mBoot info display skipped.\033[0m"
