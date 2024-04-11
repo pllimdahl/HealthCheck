@@ -45,8 +45,8 @@ if [[ -n "$answer" && "$answer" =~ ^[Yy]$ ]]; then
 
     # Display logs from the previous boot to infer the reason for the last reboot
     echo -e "\033[0;36mPOSSIBLE REASON FOR LAST REBOOT/BOOT:\n\033[0m"
-    sudo journalctl --boot=-1 -e | grep -Ei 'shutting down|reboot|starting' | tail
-    echo -e "\n"
+
+sudo journalctl --boot=-1 -e | grep -Ei 'shutting down|reboot|starting' | GREP_COLOR='01;32' grep --color=always -E 'normally|power-off|rebooted' || GREP_COLOR='01;31' grep --color=always -E 'error|failed|panic'    echo -e "\n"
 else
     echo -e "\033[0;31mBoot info display skipped.\033[0m"
 fi
