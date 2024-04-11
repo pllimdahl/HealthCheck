@@ -30,11 +30,16 @@ for package in "${packages[@]}"; do
 done
 
 echo -e "\033[0;36m\nCHECKING SERVICES:\n\033[0m"
-echo -e "\033[0;33mdch-p status: $(systemctl is-active dch-p.service)\033[0m"
-echo -e "\033[0;33mcinead-d status: $(systemctl is-active cinead-d.service)\033[0m"
-echo -e "\033[0;33mcinegame-d status: $(systemctl is-active cinegame-d.service)\033[0m"
-echo -e "\033[0;33mcinecard-d status: $(systemctl is-active cinecard-d.service)\033[0m"
-echo -e "\033[0;33mcinematazticio24 status: $(systemctl is-active cinematazticio24.service)\033[0m"
+
+for service in dch-p.service cinead-d.service cinegame-d.service cinecard-d.service cinematazticio24.service; do
+    status=$(systemctl is-active $service)
+    if [[ $status == "active" ]]; then
+        echo -e "\033[0;32m${service%.*} status: $status\033[0m"
+    else
+        echo -e "\033[0;31m${service%.*} status: $status\033[0m"
+    fi
+done
+
 echo -e "\n"
 
 # Ask the user if they want to see the boot info
