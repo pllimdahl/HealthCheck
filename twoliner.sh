@@ -11,6 +11,16 @@ if [[ $output == *"disconnected"* ]]; then
 else
     echo "$output"
 fi
+echo -e "\033[0;36m\nCHECKING DEFAULT AUDIO SINK:\n\033[0m"
+
+output=$(sudo runuser -l player -c 'pacmd list-sinks')
+
+if [[ -z "$output" ]]; then
+    echo -e "\033[0;31mNo audio sinks found.\033[0m"
+else
+    default_sink=$(echo "$output" | awk '/\*/{getline; print}' | awk '/name: </{print $2}' | tr -d '<>')
+    echo -e "\033[1;37mDefault sink is: $default_sink\033[0m"
+fi
 
 echo -e "\033[0;36m\nCHECKING NETWORK:\n\033[0m"
 INTERFACE=$(ip route | grep default | awk '{print $5}')
