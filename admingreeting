@@ -1,0 +1,36 @@
+echo -e "\033[1;34m "  # Blue
+echo "======================================"
+echo "-- Welcome to the Dev Test machine --"
+echo "======================================"
+echo -e "\033[0m "
+echo -e "\033[0;36mCurrent: market and env: \033[1;37m$(tail -n 1 /etc/systemd/system.conf)\033[0;36m\033[0m"  # Cyan and Whiteecho " "
+echo " "
+echo -e "\033[0;33mTo change the market and env type 'changemarket'\033[0m"  # Yellow
+echo " "
+echo -e "\033[0;33mthis machine can be restored to a default state by typing 'sudo timeshift --restore'\033[0m"  # Orange
+#echo "Last 5 logins:"
+#cat /tmp/logins
+echo " "
+packages=("dch-p" "cinead-d" "cinead-p" "cinegame-d" "cinegame-p" "cinecard-d" "cinecard-p" "cinematazticio24" "nodejs")
+
+for package in "${packages[@]}"; do
+    if dpkg -s "$package" &> /dev/null; then
+        echo -e "\033[1;37m$package \033[1;35m$(dpkg -s "$package" | grep -i version)\033[0m"
+    else
+        echo -e "\033[1;37m$package is NOT installed\033[0m"
+    fi
+done
+
+echo -e "\033[0;36m\nCHECKING SERVICES:\n\033[0m"
+
+for service in dch-p.service cinead-d.service cinegame-d.service cinecard-d.service cinematazticio24.service; do
+    status=$(systemctl is-active $service)
+    if [[ $status == "active" ]]; then
+        echo -e "\033[0;32m${service%.*} status: $status\033[0m"
+    else
+        echo -e "\033[0;31m${service%.*} status: $status\033[0m"
+    fi
+done
+echo " "
+echo -e "\033[1;32mhave fun!\033[0m"  # Bright Green
+echo -e "\033[0m "
