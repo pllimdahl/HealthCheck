@@ -1,39 +1,81 @@
+#!/bin/bash
+
 sudo echo -e "\n"
 echo -e "\033[0;34m\nSTARTING HEALTH CHECK\n\033[0m"
 echo -e "\033[0;36m\nCHECKING NVIDIA DRIVER:\n\033[0m"
 if nvidia-smi &>/dev/null; then echo -e "\033[0;32mNVIDIA driver is installed and active.\n\033[0m"; else echo -e "\033[0;31mNVIDIA driver is not installed.\n\033[0m"; fi
 echo -e "\033[0;36mSCREEN RES AND OUTPUT:\n\033[0m"
 
-output=$(sudo runuser -l player -c 'export DISPLAY=:0 && xrandr | grep HDMI-0')
+output=$(sudo runuser -l player -c 'export DISPLAY=:0 && xrandr')
 
-if [[ $output == *"disconnected"* ]]; then
-    echo -e "\033[0;31mNo HDMI connected. Check for DP or DVI with xrandr\033[0m"
-else
-    echo "$output"
+# Check if a display is detected
+if [[ $output == *"can't open display"* ]]; then
+    echo -e "\033[0;31mError: No display detected.\033[0m"
+    exit 1
 fi
-echo -e "\033[0;36m\nCHECKING DEFAULT AUDIO SINK:\n\033[0m"
+
+current_resolution=$(echo "$output" | grep -oP "current \K[0-9]+ x [0-9]+")
+connected_source=$(echo "$output" | grep " connected" | awk '{print $1}')
+current_refresh_rate=$(echo "$output" | grep -oP "\s+\K[0-9]+\.?[0-9]*\*")
+
+# Check if the current resolution, connected source, and current refresh rate are found
+if [[ -z "$current_resolution" ]]; then
+    echo -e "\033[0;31mError: Current resolution not found.\033[0m"
+fi
+
+if [[ -z "$connected_source" ]]; then
+    echo -e "\033[0;31mError: Connected source not found.\033[0m"
+fi
+
+if [[ -z "$current_refresh_rate" ]]; then
+    echo -e "\033[0;31mError: Current refresh rate not found.\033[0m"
+fi
+
+echo -e "Connected Source: \033[0;33m$connected_source\033[0m"
+echo -e "Current Resolution: \033[0;33m$current_resolution\033[0m"
+echo -e "Current Refresh Rate: \033[0;33m${current_refresh_rate%\*} Hz\033[0m"
+
+echo -e "\033[0;36m\nCHECKING SOUND:\n\033[0m"
 
 output=$(sudo runuser -l player -c 'pacmd list-sinks')
 
-if [[ -z "$output" ]]; then
-    echo -e "\033[0;31mNo audio sinks found.\033[0m"
+# Check if the PulseAudio daemon is not running
+if [[ $output == *"No PulseAudio daemon running, or not running as session daemon."* ]]; then
+    echo -e "\033[0;31m$output\033[0m"
 else
-    default_sink=$(echo "$output" | awk '/\*/{getline; print}' | awk '/name: </{print $2}' | tr -d '<>')
-    echo -e "\033[1;37mDefault sink is: $default_sink\033[0m"
+
+# tbh this next  awk part was entirely written by copilot and is beyond my bash scripting knowledge lol
+# Use awk to parse the output and extract the required information
+alsa_name=$(echo "$output" | awk '
+    /[*] index:/ {           # Look for the line with "* index:"
+        found=1              # Set a flag to start capturing lines
+    }
+    found && /alsa.name/ {   # If within a relevant block, look for "alsa.name"
+        gsub(/^ +| +$/, "")  # Remove leading and trailing spaces
+        print $0             # Print the alsa.name line
+        exit                 # Exit after finding the alsa.name (assuming only one active index)
+    }
+')
+
+# Replace "alsa.name =" with "Sound sink connected:"
+alsa_name=$(echo "$alsa_name" | sed 's/alsa.name =//')
+# Why doesnt this align the left like the rest???
+echo -e "Sound sink connected: \033[0;33m$alsa_name\033[0m"
 fi
 
 echo -e "\033[0;36m\nCHECKING NETWORK:\n\033[0m"
 INTERFACE=$(ip route | grep default | awk '{print $5}')
-echo -e "\033[0;33mIP: $(hostname -I | awk '{print $1}')\n\033[0m"
-echo -e "\033[0;33mMAC: $(ip link show $INTERFACE | awk '/link/ {print $2}')\n\033[0m"
+echo -e "IP: \033[0;33m$(hostname -I | awk '{print $1}')\033[0m"
+echo -e "MAC: \033[0;33m$(cat /sys/class/net/$INTERFACE/address)\033[0m"
 curl -s --head --request GET http://api.cinemataztic.com --max-time 10 > /dev/null 2>&1 && echo -e "\033[0;32m\n---------- API is reachable ----------\n\033[0m" || echo -e "\033[0;31m\n---------- API not reachable ----------\n\033[0m"
 echo -e "\033[0;36mCHECKING VERSIONS:\n\033[0m"
 
-packages=("dch-p" "cinead-d" "cinead-p" "cinegame-d" "cinegame-p" "cinecard-d" "cinecard-p" "cinematazticio24" "nodejs")
+packages=("dch-p" "cinead-d" "cinead-p" "cinead-p" "cinegame-d" "cinegame-p" "cinecard-d" "cinecard-p" "cinematazticio24" "nodejs")
 
 for package in "${packages[@]}"; do
     if dpkg -s "$package" &> /dev/null; then
-        echo -e "\033[0;32m$package $(dpkg -s "$package" | grep -i version)\033[0m"
+        version=$(dpkg -s "$package" 2>/dev/null | grep -i version)
+        echo -e "\033[0;32m$package $version\033[0m"
     else
         echo -e "\033[0;31m$package is NOT installed\033[0m"
     fi
